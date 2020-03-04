@@ -6,12 +6,17 @@ from authlib.jose import errors, jwt
 
 dumps_str = partial(dumps, default=str)
 
+
+def custom_json_response(obj):
+    return web.json_response(obj, dumps=dumps_str)
+
+
 def row_response(result):
-    return web.json_response(dict(result.items()), dumps=dumps_str)
+    return custom_json_response(dict(result.items()))
 
 
 def row_list_response(results):
-    return [row_response(result) for result in results]
+    return custom_json_response([dict(result.items()) for result in results])
 
 
 def get_key_with_value(dictionary, target_value):

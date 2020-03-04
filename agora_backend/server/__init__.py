@@ -2,16 +2,19 @@ from datetime import datetime
 from hashlib import pbkdf2_hmac
 from os import urandom
 
-from asyncpg import create_pool
 from aiohttp import web
 import aiohttp_cors
+from asyncpg import create_pool
 from authlib.jose import errors, jwt
 from datetime import datetime, timedelta
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 from .clinician import routes as clinician_routes
-from .util import validate_request
+from .patient import routes as patient_routes
+from .session import routes as session_routes
+from .user import routes as user_routes
+from .util import validate_request, row_response, row_list_response
 
 
 def load_keys(password):
@@ -193,6 +196,38 @@ async def post_register_form(request):
         return web.Response(text="Form response registered successfully!")
 
 
+@routes.get("/form/{form_name}")
+async def get_form_by_id(request):
+    claims = validate_request(request)["agora"]
+
+    form_name = request.match_info["form_name"]
+
+    async with request.app["pg_pool"].acquire() as connection:
+        statement = await connection.prepare("""SELECT * FROM forms WHERE form_name = $1""")
+
+        result = await statement.fetchrow(form_name)
+
+        if result:
+            return row_response(result)
+
+
+@routes.get("/form/response/{response_id}")
+async def get_form_response(request):
+    claims = validate_request(request)["agora"]
+
+    response_id = int(request.match_info["response_id"])
+
+    async with request.app["pg_pool"].acquire() as connection:
+        statement = await connection.prepare("""
+            SELECT response_id, response_datetime, user_id, user_name, user_full_name, form_name, form_data, response_data
+            FROM responses JOIN forms ON response_form_name = form_name JOIN users on response_owner_id = user_id
+            WHERE response_id = $1""")
+
+        results = await statement.fetchrow(response_id)
+
+        return row_response(results)
+
+
 async def setup_app(app):
     # On server startup
     app["pg_pool"] = await create_pool(
@@ -219,6 +254,9 @@ def get_base_app():
 
     app.add_routes(routes)
     app.add_routes(clinician_routes)
+    app.add_routes(patient_routes)
+    app.add_routes(session_routes)
+    app.add_routes(user_routes)
 
     return app
 
