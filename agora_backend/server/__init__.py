@@ -118,46 +118,6 @@ async def authenticate_user(request):
     return web.Response(body=token)
 
 
-@routes.get("/user/clinicians")
-async def get_clinicians(request):
-    session = validate_request(request)["agora"]
-
-    user_id, user_type = session["user_id"], session["user_type"]
-
-    if user_type not in request.app["types"] or user_type != "patient":
-        raise web.HTTPUnprocessableEntity(text="Client is not a valid user type for endpoint!")
-
-    async with request.app["pg_pool"].acquire() as connection:
-        clinician_stmt = await connection.prepare("""
-            SELECT user_id, user_name, user_full_name
-            FROM serves JOIN users ON users.user_id = serves.clinician_id
-            WHERE serves.patient_id = $1""")
-
-        results = await clinician_stmt.fetch(user_id)
-
-        return web.json_response([dict(result.items()) for result in results])
-
-
-@routes.get("/user/patients")
-async def get_patients(request):
-    session = validate_request(request)["agora"]
-
-    user_id, user_type = session["user_id"], session["user_type"]
-
-    if user_type not in request.app["types"] or user_type != "clinician":
-        raise web.HTTPUnprocessableEntity(text="Client is not a valid user type for this endpoint!")
-
-    async with request.app["pg_pool"].acquire() as connection:
-        clinician_stmt = await connection.prepare("""
-            SELECT user_id, user_name, user_full_name
-            FROM serves JOIN users ON users.user_id = serves.patient_id
-            WHERE serves.clinician_id = $1""")
-
-        results = await clinician_stmt.fetch(user_id)
-
-        return web.json_response([dict(result.items()) for result in results])
-
-
 @routes.get("/user/register_form")
 async def get_register_form(request):
     session = validate_request(request)["agora"]
@@ -178,22 +138,39 @@ async def get_register_form(request):
 
 @routes.post("/user/register_form")
 async def post_register_form(request):
-    session = validate_request(request)["agora"]
+    claims = validate_request(request)["agora"]
 
     data = await request.json()
 
     try:
-        form_name, form_data = data["name"], data["results"]
+        form_name, form_data = data["form_name"], data["form_data"]
     except KeyError:
         raise web.HTTPUnprocessableEntity(text="Not all keys provided!")
 
     async with request.app["pg_pool"].acquire() as connection:
-        await connection.execute("""
+        response_id = await connection.fetchval("""
             INSERT INTO responses (response_owner_id, response_form_name, response_datetime, response_data)
-            VALUES ($1, $2, $3, $4)""",
-            session["user_id"], form_name, datetime.utcnow(), form_data)
+            VALUES ($1, $2, $3, $4) RETURNING response_id""",
+            claims["user_id"], form_name, datetime.utcnow(), form_data)
+
+        await connection.execute("""UPDATE users SET user_response_id = $1 WHERE user_id = $2""",
+            response_id, claims["user_id"])
 
         return web.Response(text="Form response registered successfully!")
+
+
+@routes.get("/user/registration_response")
+async def get_register_form(request):
+    claims = validate_request(request)["agora"]
+
+    async with request.app["pg_pool"].acquire() as connection:
+        statement = await connection.prepare("""
+            SELECT user_response_id FROM users WHERE user_id = $1""")
+
+        result = await statement.fetchrow(claims["user_id"])
+
+        if result:
+            return web.json_response(dict(result.items()))
 
 
 @routes.get("/form/{form_name}")
