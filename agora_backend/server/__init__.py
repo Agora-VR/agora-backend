@@ -219,7 +219,7 @@ async def setup_app(app):
 def get_base_app():
     app = web.Application()
 
-    app["public_key"], app["private_key"] = load_keys("EmotionComedian")
+    app["public_key"], app["private_key"] = load_keys("ButgersBuses")
 
     app["tokens"] = {}
 
@@ -238,11 +238,9 @@ def get_base_app():
     return app
 
 
-def get_app(loop):
-    app = get_base_app()
-
+def apply_cors(app, url):
     cors = aiohttp_cors.setup(app, defaults={
-        "http://localhost:5000": aiohttp_cors.ResourceOptions(
+        url: aiohttp_cors.ResourceOptions(
             allow_credentials=False,
             expose_headers="*",
             allow_headers="*",
@@ -252,6 +250,13 @@ def get_app(loop):
     for route in app.router.routes():
         cors.add(route)
 
+    return app
+
+
+def get_app():
+    app = get_base_app()
+
     app.cleanup_ctx.append(setup_app)
 
     return app
+

@@ -107,17 +107,6 @@ CREATE TABLE public.oversees (
 
 
 --
--- Name: registration_responses; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.registration_responses (
-    user_id integer NOT NULL,
-    form_name character varying NOT NULL,
-    response_id bigint NOT NULL
-);
-
-
---
 -- Name: responds; Type: TABLE; Schema: public; Owner: -
 --
 

@@ -62,3 +62,10 @@ python .\database_server.py
 Assuming your local Postgresql database server is running and has an
 `agora` database inside, the server should be running on port 8080.
 
+## Database Dumping
+
+```
+pg_dump -s -U postgres agora > create_schema.sql
+pg_dump -a -U postgres agora > create_data.sql
+```
+
