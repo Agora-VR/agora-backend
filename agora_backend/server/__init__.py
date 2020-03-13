@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
+from .caregiver import routes as caregiver_routes
 from .clinician import routes as clinician_routes
 from .patient import routes as patient_routes
 from .session import routes as session_routes
@@ -219,7 +220,7 @@ async def setup_app(app):
 def get_base_app():
     app = web.Application()
 
-    app["public_key"], app["private_key"] = load_keys("ButgersBuses")
+    app["public_key"], app["private_key"] = load_keys("EmotionComedian")
 
     app["tokens"] = {}
 
@@ -230,6 +231,7 @@ def get_base_app():
     }
 
     app.add_routes(routes)
+    app.add_routes(caregiver_routes)
     app.add_routes(clinician_routes)
     app.add_routes(patient_routes)
     app.add_routes(session_routes)
