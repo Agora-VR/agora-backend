@@ -97,6 +97,16 @@ CREATE TABLE public.forms (
 
 
 --
+-- Name: oversee_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oversee_requests (
+    patient_id integer NOT NULL,
+    caregiver_id integer NOT NULL
+);
+
+
+--
 -- Name: oversees; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -146,6 +156,16 @@ CREATE SEQUENCE public.responses_response_id_seq
 --
 
 ALTER SEQUENCE public.responses_response_id_seq OWNED BY public.responses.response_id;
+
+
+--
+-- Name: serve_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.serve_requests (
+    patient_id integer NOT NULL,
+    clinician_id integer NOT NULL
+);
 
 
 --
@@ -256,19 +276,19 @@ ALTER TABLE ONLY public.forms
 
 
 --
+-- Name: oversee_requests oversee_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oversee_requests
+    ADD CONSTRAINT oversee_requests_pkey PRIMARY KEY (patient_id, caregiver_id);
+
+
+--
 -- Name: oversees oversees_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.oversees
     ADD CONSTRAINT oversees_pkey PRIMARY KEY (patient_id, caregiver_id);
-
-
---
--- Name: registration_responses registration_responses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.registration_responses
-    ADD CONSTRAINT registration_responses_pkey PRIMARY KEY (user_id);
 
 
 --
@@ -285,6 +305,14 @@ ALTER TABLE ONLY public.responds
 
 ALTER TABLE ONLY public.responses
     ADD CONSTRAINT responses_pkey PRIMARY KEY (response_id);
+
+
+--
+-- Name: serve_requests serve_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.serve_requests
+    ADD CONSTRAINT serve_requests_pkey PRIMARY KEY (patient_id, clinician_id);
 
 
 --
@@ -320,6 +348,22 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: oversee_requests oversee_requests_caregiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oversee_requests
+    ADD CONSTRAINT oversee_requests_caregiver_id_fkey FOREIGN KEY (caregiver_id) REFERENCES public.users(user_id);
+
+
+--
+-- Name: oversee_requests oversee_requests_patient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oversee_requests
+    ADD CONSTRAINT oversee_requests_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(user_id);
+
+
+--
 -- Name: oversees oversees_caregiver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -336,30 +380,6 @@ ALTER TABLE ONLY public.oversees
 
 
 --
--- Name: registration_responses registration_responses_form_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.registration_responses
-    ADD CONSTRAINT registration_responses_form_name_fkey FOREIGN KEY (form_name) REFERENCES public.forms(form_name);
-
-
---
--- Name: registration_responses registration_responses_response_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.registration_responses
-    ADD CONSTRAINT registration_responses_response_id_fkey FOREIGN KEY (response_id) REFERENCES public.responses(response_id);
-
-
---
--- Name: registration_responses registration_responses_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.registration_responses
-    ADD CONSTRAINT registration_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id);
-
-
---
 -- Name: responses responses_response_form_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -373,6 +393,22 @@ ALTER TABLE ONLY public.responses
 
 ALTER TABLE ONLY public.responses
     ADD CONSTRAINT responses_response_owner_id_fkey FOREIGN KEY (response_owner_id) REFERENCES public.users(user_id);
+
+
+--
+-- Name: serve_requests serve_requests_clinician_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.serve_requests
+    ADD CONSTRAINT serve_requests_clinician_id_fkey FOREIGN KEY (clinician_id) REFERENCES public.users(user_id);
+
+
+--
+-- Name: serve_requests serve_requests_patient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.serve_requests
+    ADD CONSTRAINT serve_requests_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(user_id);
 
 
 --
