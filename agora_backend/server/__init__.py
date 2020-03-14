@@ -34,6 +34,12 @@ routes = web.RouteTableDef()
 
 @routes.post("/register")
 async def post_user(request):
+    """
+    Register a new user.
+
+    Requires a ``user_name``, ``user_pass`` and ``user_type``
+    in the payload to create the new user.
+    """
     data = await request.json()  # Use this like a dictionary
 
     # Try to get the user_name value from the post data
@@ -70,6 +76,14 @@ async def post_user(request):
 
 @routes.post("/authenticate")
 async def authenticate_user(request):
+    """
+    Request an authentication token from the server. Requires
+    ``user_name`` and ``user_pass`` values in the payload.
+
+    Assuming the credentials are valid, the server will respond with
+    a string containing the token. Otherwise, it will return a 422
+    response.
+    """
     data = await request.json()
 
     try:
@@ -121,6 +135,9 @@ async def authenticate_user(request):
 
 @routes.get("/user/register_form")
 async def get_register_form(request):
+    """
+    Get the appropiate registration form for the type of user.
+    """
     session = validate_request(request)["agora"]
 
     user_type = session["user_type"]
@@ -139,6 +156,13 @@ async def get_register_form(request):
 
 @routes.post("/user/register_form")
 async def post_register_form(request):
+    """
+    Post response to a registration form.
+
+    Requires ``form_name`` (the name of the form being filled out)
+    and ``form_data`` (the JSON string representation of the results)
+    """
+
     claims = validate_request(request)["agora"]
 
     data = await request.json()
@@ -162,6 +186,9 @@ async def post_register_form(request):
 
 @routes.get("/user/registration_response")
 async def get_register_form(request):
+    """
+    Get the ``response_id`` for a user's submitted registration form
+    """
     claims = validate_request(request)["agora"]
 
     async with request.app["pg_pool"].acquire() as connection:
@@ -176,6 +203,9 @@ async def get_register_form(request):
 
 @routes.get("/form/{form_name}")
 async def get_form_by_id(request):
+    """
+    View a form by it's ``form_name``
+    """
     claims = validate_request(request)["agora"]
 
     form_name = request.match_info["form_name"]
@@ -191,6 +221,9 @@ async def get_form_by_id(request):
 
 @routes.get("/form/response/{response_id}")
 async def get_form_response(request):
+    """
+    View a response to a form by it's ``response_id``
+    """
     claims = validate_request(request)["agora"]
 
     response_id = int(request.match_info["response_id"])
@@ -206,6 +239,11 @@ async def get_form_response(request):
         return row_response(results)
 
 
+@routes.get("/")
+async def get_root(request):
+    return web.Response(text=request.app["documentation"], content_type="text/html")
+
+
 async def setup_app(app):
     # On server startup
     app["pg_pool"] = await create_pool(
@@ -215,6 +253,49 @@ async def setup_app(app):
 
     # On server shutdown (cleanup)
     await app['pg_pool'].close()
+
+
+def get_app_documentation(app):
+    template = """
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {{max-width: 800px; margin: 0 auto;}}
+    dt {{font-weight: bold;}}
+    dd {{margin: 0.25em 0 0.5em 1.5em;}}
+  </style>
+</head>
+<body>
+  <h1>Agora API Documentation</h1>
+  <p>
+    This page lists the API endpoints for the current deployment at
+    <a href="https://agoravr.online/api/">agoravr.online</a>.
+  </p>
+  <h2>Authentication Notes</h2>
+  <p>
+    Besides <em>/authenticate</em> and <em>/register</em> all endpoints will
+    require a token to authenticate with the server.
+  </p>
+  <p>
+    After authenticating with <em>/authenticate</em> you will be provided a
+    temporary token. To access the appropiate endpoints for the current user,
+    send the token in the Authorization header of each request you make.
+  </p>
+  <h2>Endpoints</h2>
+  <dl>{}</dl>
+</body>
+</html>"""
+
+    doc = ""
+
+    for router in app.router.routes():
+        if router.method != "HEAD":
+            doc += f"<dt>{router.method} {router.resource.canonical}</dt>\n<dd>{router.handler.__doc__}</dd>\n"
+
+    return template.format(doc)
 
 
 def get_base_app():
@@ -236,6 +317,8 @@ def get_base_app():
     app.add_routes(patient_routes)
     app.add_routes(session_routes)
     app.add_routes(user_routes)
+
+    app["documentation"] = get_app_documentation(app)
 
     return app
 

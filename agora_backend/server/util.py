@@ -30,9 +30,12 @@ def validate_request(request):
     except KeyError:
         raise web.HTTPUnprocessableEntity(text="No authorization header provided!")
 
-    auth_type, auth_token = authorization_value.split(" ")
+    try:
+        auth_type, auth_token = authorization_value.split(" ")
+    except ValueError:
+        raise web.HTTPUnprocessableEntity(text="Invalid authorization header provided!")
 
-    if auth_type != "Bearer":
+    if auth_type.lower() != "bearer":
         raise web.HTTPUnprocessableEntity(text="Invalid authentication method!")
 
     tokens = request.app["tokens"]

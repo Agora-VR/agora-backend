@@ -10,6 +10,12 @@ routes = web.RouteTableDef()
 
 @routes.get("/session/{session_id}")
 async def get_session_info(request):
+    """
+    Get information about a session by its ``session_id``.
+
+    If the client is not authorized to view the session, then a
+    422 response is returned.
+    """
     claims = validate_request(request)["agora"]
 
     session_id = int(request.match_info["session_id"])

@@ -101,3 +101,20 @@ async def get_clinicians(request):
         results = await clinician_stmt.fetch(claims["user_id"])
 
         return row_list_response(results)
+
+
+@routes.get("/patient/sessions")
+async def get_patient_sessions(request):
+    """
+    Get list of session completed by the patient.
+    """
+    claims = validate_request(request)["agora"]
+
+    validate_patient(claims)
+
+    async with request.app["pg_pool"].acquire() as connection:
+
+        results = await connection.fetch(
+            """SELECT * FROM sessions WHERE session_owner_id = $1""", claims["user_id"])
+
+        return row_list_response(results)
