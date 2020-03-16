@@ -28,20 +28,20 @@ def validate_request(request):
     try:
         authorization_value = request.headers["Authorization"]
     except KeyError:
-        raise web.HTTPUnprocessableEntity(text="No authorization header provided!")
+        raise web.HTTPUnauthorized(text="No authorization header provided!")
 
     try:
         auth_type, auth_token = authorization_value.split(" ")
     except ValueError:
-        raise web.HTTPUnprocessableEntity(text="Invalid authorization header provided!")
+        raise web.HTTPUnauthorized(text="Invalid authorization header provided!")
 
     if auth_type.lower() != "bearer":
-        raise web.HTTPUnprocessableEntity(text="Invalid authentication method!")
+        raise web.HTTPUnauthorized(text="Invalid authentication method!")
 
     tokens = request.app["tokens"]
 
     if auth_token not in tokens.values():
-        raise web.HTTPUnprocessableEntity(text="Invalidated authentication token used!")
+        raise web.HTTPUnauthorized(text="Invalidated authentication token used!")
 
     claims = jwt.decode(auth_token, request.app["public_key"])
 
@@ -51,7 +51,7 @@ def validate_request(request):
     except errors.ExpiredTokenError:
         del request.app["tokens"][get_key_with_value(tokens, auth_token)]
 
-        raise web.HTTPUnprocessableEntity(text="Provided token is expired!")
+        raise web.HTTPUnauthorized(text="Provided token is expired!")
 
 
 def validate_token(handler):
@@ -69,7 +69,7 @@ def validate_user(*user_types):
         @wraps(handler)
         async def wrapped(request):
             if request["claims"]["user_type"] not in user_types:
-                raise web.HTTPUnprocessableEntity(text="User type cannot access this endpoint!")
+                raise web.HTTPForbidden(text="User type cannot access this endpoint!")
 
             return await handler(request)
 

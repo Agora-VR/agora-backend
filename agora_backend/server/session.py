@@ -1,5 +1,6 @@
 from datetime import datetime
 from os.path import basename
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from aiohttp import hdrs, web
@@ -179,5 +180,32 @@ async def post_session_file(request):
 
 
 @routes.get("/session/{session_id}/files/{file_type}")
+@validate_token
 async def get_session_file(request):
-    pass
+    """
+    Get a file associated with a session.
+    """
+    claims = request["claims"]
+
+    session_id = int(request.match_info["session_id"])
+    file_type = request.match_info["file_type"]
+
+    async with request.app["pg_pool"].acquire() as connection:
+        file_name = await connection.fetchval("""
+            SELECT name FROM session_files WHERE session_id = $1 and type = $2""",
+            session_id, file_type)
+
+        if not file_name:
+            raise web.HTTPUnprocessableEntity(text="Session does not have that file type!")
+
+        file_path = request.app["storage_path"].joinpath(file_name)
+
+        if not file_path.is_file():
+            raise web.HTTPUnprocessableEntity(text="Request file is missing!!!")
+
+        response = web.FileResponse(file_path)
+
+        # NOTE: This is hard coded right now, will come from a table in the future
+        response.content_type = "audio/mpeg"
+
+        return response

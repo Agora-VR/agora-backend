@@ -2,6 +2,7 @@ from datetime import datetime
 from hashlib import pbkdf2_hmac
 from os import mkdir, urandom
 from os.path import isdir
+from pathlib import Path
 
 from aiohttp import web
 import aiohttp_cors
@@ -293,13 +294,13 @@ def get_app_documentation(app):
     doc = ""
 
     for router in app.router.routes():
-        if router.method != "HEAD":
+        if router.method != "HEAD" and router.resource.canonical != "/":
             doc += f"<dt>{router.method} {router.resource.canonical}</dt>\n<dd>{router.handler.__doc__}</dd>\n"
 
     return template.format(doc)
 
 
-def get_base_app(_):
+def get_base_app():
     app = web.Application()
 
     app["public_key"], app["private_key"] = load_keys("EmotionComedian")
@@ -337,15 +338,15 @@ def apply_cors(app, url):
     return app
 
 
-def get_app(foo):
-    app = get_base_app(foo)
+def get_app(storage=None):
+    app = get_base_app()
 
     app["documentation"] = get_app_documentation(app)
 
-    storage_path = "storage"
+    storage_path = Path("storage" if storage is None else storage)
 
-    if not isdir(storage_path):
-        mkdir(storage_path)
+    if not storage_path.is_dir():
+        storage_path.mkdir()
 
     app["storage_path"] = storage_path
 

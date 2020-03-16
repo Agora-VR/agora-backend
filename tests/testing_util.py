@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from asyncpg import create_pool
 from pytest import fixture
 
@@ -17,10 +19,10 @@ async def testing_app(tmpdir):
         # On server shutdown (cleanup)
         await app['pg_pool'].close()
 
-    def get_app_wrapper(foo):
-        app = get_base_app(foo)
+    def get_app_wrapper(_):
+        app = get_base_app()
 
-        app["storage_path"] = tmpdir
+        app["storage_path"] = Path(tmpdir)
 
         app.cleanup_ctx.append(setup_app)
 
