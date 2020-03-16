@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partial, wraps
 from json import dumps
 
 from aiohttp import web
@@ -52,3 +52,27 @@ def validate_request(request):
         del request.app["tokens"][get_key_with_value(tokens, auth_token)]
 
         raise web.HTTPUnprocessableEntity(text="Provided token is expired!")
+
+
+def validate_token(handler):
+    @wraps(handler)
+    async def wrapped_handler(request):
+        request["claims"] = validate_request(request)["agora"]
+
+        return await handler(request)
+
+    return wrapped_handler
+
+
+def validate_user(*user_types):
+    def wrapper(handler):
+        @wraps(handler)
+        async def wrapped(request):
+            if request["claims"]["user_type"] not in user_types:
+                raise web.HTTPUnprocessableEntity(text="User type cannot access this endpoint!")
+
+            return await handler(request)
+
+        return wrapped
+
+    return wrapper

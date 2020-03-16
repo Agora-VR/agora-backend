@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.2
--- Dumped by pg_dump version 12.2
+-- Dumped from database version 12.1
+-- Dumped by pg_dump version 12.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -48,6 +48,14 @@ COPY public.users (user_id, user_type_id, user_name, user_hash, user_salt, user_
 
 
 --
+-- Data for Name: oversee_requests; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.oversee_requests (patient_id, caregiver_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: oversees; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -69,6 +77,14 @@ COPY public.responds (session_id, response_id) FROM stdin;
 --
 
 COPY public.responses (response_id, response_form_name, response_datetime, response_owner_id, response_data) FROM stdin;
+\.
+
+
+--
+-- Data for Name: serve_requests; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.serve_requests (patient_id, clinician_id) FROM stdin;
 \.
 
 
@@ -95,6 +111,15 @@ room	sample	sample	sample
 --
 
 COPY public.sessions (session_owner_id, session_datetime, session_duration, session_id, type_name) FROM stdin;
+2	2020-02-29 03:17:27.533606	\N	1	room
+\.
+
+
+--
+-- Data for Name: session_files; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.session_files (session_id, type, name) FROM stdin;
 \.
 
 
@@ -123,7 +148,7 @@ SELECT pg_catalog.setval('public.responses_response_id_seq', 1, false);
 -- Name: sessions_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.sessions_session_id_seq', 1, false);
+SELECT pg_catalog.setval('public.sessions_session_id_seq', 1, true);
 
 
 --

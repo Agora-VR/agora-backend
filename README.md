@@ -6,8 +6,8 @@
 * [Python 3.8](https://www.python.org/downloads/)
 
 I also recommend using the
-[Powershell Preview](https://github.com/PowerShell/PowerShell/releases/tag/v7.0.0-rc.2)
-for use in Visual Studio Code.
+[Powershell Preview](https://github.com/PowerShell/PowerShell/releases/tag/v7.0.0)
+for use in Visual Studio Code on Windows.
 
 ## Generating RSA Keys
 
@@ -19,53 +19,57 @@ openssl genpkey -algorithm RSA -out private.pem -aes-256-cbc -pass pass:password
 openssl rsa -in private.pem -pubout -out public.pem
 ```
 
-## Create a Virtual Environment
+## Installing Poetry
 
-To run these scripts, it is best to create a virtual environment and install
-the dependencies in it.
+[Poetry](https://python-poetry.org/) is a project/package manager for Python-based
+projects. It is used heavily in this project to manage dependencies and to run the
+project's server.
 
-First, create the virtual environment:
+To install Poetry, feel free to follow along with
+[installation section](https://python-poetry.org/docs/#installation)
+in the documentation. I personally used the unsuggested method of
+[installing with pip](https://python-poetry.org/docs/#installing-with-pip)
+on my Windows system.
 
-```
-py -m venv .venv
-```
+## Setting Up the Environment
 
-Next, enter the virtual environment. Once you are in, you should see green
-text at the beginning of your prompt saying `(.venv)`
+Using Poetry, the only setup requires is running `poetry install`. From
+there, you can use `poetry shell` to open a shell in the virtual environment
+or `poetry run` to run with the virtual environment.
 
-```
-.\.venv\Scripts\Activate.ps1
-```
+## Running the Development Server
 
-Now, install the dependencies with pip:
-
-```
-pip install aiohttp asyncpg
-```
-
-## Running the Script
-
-Before running the script, be sure to enter the virtual environment. Again,
-the green text is an indicator of whether you are in the virtual environment
-or not. If you don't seen green text, run:
+To run the development server:
 
 ```
-.\.venv\Scripts\Activate.ps1
+poetry run python -m agora_backend dev
 ```
 
-Next, run the script:
+Assuming you have set up the `agora` database and it is running, the backend
+server should start on port 8080.
+
+## Running the Tests
+
+Running the test requires setting up another database named `agora_testing`
+using the same steps used for the development database. Afterwards, run the
+following command (on Windows):
 
 ```
-python .\database_server.py
+poetry run pytest .\tests
 ```
-
-Assuming your local Postgresql database server is running and has an
-`agora` database inside, the server should be running on port 8080.
 
 ## Database Dumping
 
+On Windows:
+
 ```
-pg_dump -s -U postgres agora > create_schema.sql
-pg_dump -a -U postgres agora > create_data.sql
+pg_dump -sO -U postgres agora | Out-File -FilePath .\create_schema.sql
+pg_dump -a -U postgres agora | Out-File -FilePath .\create_schema.sql
 ```
 
+On GNU/Linux:
+
+```
+pg_dump -sO -U postgres agora > create_schema.sql
+pg_dump -a -U postgres agora > create_data.sql
+```

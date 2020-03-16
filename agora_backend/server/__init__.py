@@ -1,6 +1,7 @@
 from datetime import datetime
 from hashlib import pbkdf2_hmac
-from os import urandom
+from os import mkdir, urandom
+from os.path import isdir
 
 from aiohttp import web
 import aiohttp_cors
@@ -298,7 +299,7 @@ def get_app_documentation(app):
     return template.format(doc)
 
 
-def get_base_app():
+def get_base_app(_):
     app = web.Application()
 
     app["public_key"], app["private_key"] = load_keys("EmotionComedian")
@@ -318,8 +319,6 @@ def get_base_app():
     app.add_routes(session_routes)
     app.add_routes(user_routes)
 
-    app["documentation"] = get_app_documentation(app)
-
     return app
 
 
@@ -338,10 +337,18 @@ def apply_cors(app, url):
     return app
 
 
-def get_app():
-    app = get_base_app()
+def get_app(foo):
+    app = get_base_app(foo)
+
+    app["documentation"] = get_app_documentation(app)
+
+    storage_path = "storage"
+
+    if not isdir(storage_path):
+        mkdir(storage_path)
+
+    app["storage_path"] = storage_path
 
     app.cleanup_ctx.append(setup_app)
 
     return app
-

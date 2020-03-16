@@ -179,6 +179,17 @@ CREATE TABLE public.serves (
 
 
 --
+-- Name: session_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.session_files (
+    session_id integer NOT NULL,
+    type character varying NOT NULL,
+    name character varying NOT NULL
+);
+
+
+--
 -- Name: session_types; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -324,6 +335,14 @@ ALTER TABLE ONLY public.serves
 
 
 --
+-- Name: session_files session_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_files
+    ADD CONSTRAINT session_files_pkey PRIMARY KEY (session_id, type);
+
+
+--
 -- Name: session_types session_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -425,6 +444,14 @@ ALTER TABLE ONLY public.serves
 
 ALTER TABLE ONLY public.serves
     ADD CONSTRAINT serves_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES public.users(user_id);
+
+
+--
+-- Name: session_files session_files_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_files
+    ADD CONSTRAINT session_files_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(session_id) NOT VALID;
 
 
 --
