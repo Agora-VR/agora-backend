@@ -1,3 +1,4 @@
+from datetime import datetime
 from json import dumps
 
 from aiohttp import FormData
@@ -129,3 +130,28 @@ async def test_get_session_file(aiohttp_client, testing_app, datadir):
         await connection.execute(
             """DELETE FROM session_files WHERE session_id = $1 AND type = $2""",
             SESSION_ID, DATA_TYPE)
+
+
+async def test_post_new_session(aiohttp_client, testing_app):
+    client = await aiohttp_client(testing_app)
+
+    auth_token = await get_auth_token(client, NAME, PASSWORD)
+
+    datetime_now = datetime.now()
+
+    post_response = await client.post("/session",
+        json={"datetime": str(datetime_now), "type_name": "room"},
+        headers={"Authorization": f"Bearer {auth_token}"})
+
+    assert post_response.status == 200
+
+    response_payload = await post_response.json()
+
+    # print(response_payload)
+
+    session_id = response_payload["session_id"]
+
+    # Clean up time!
+    async with client.server.app["pg_pool"].acquire() as connection:
+        await connection.execute(
+            """DELETE FROM sessions WHERE session_id = $1""", session_id)

@@ -10,6 +10,42 @@ from .util import validate_token, validate_user, validate_request, row_response,
 
 routes = web.RouteTableDef()
 
+@routes.post("/session")
+@validate_token
+@validate_user("patient")
+async def post_new_session(request):
+    """
+    Creates a new session.
+
+    Requires a payload containing:
+
+    + `datetime`: correctly formatted string (YYYY:MM:DD hh:mm:ss.mmmmmm) for when the session began
+    + `type_name`: a string denoting the type of session
+
+    On success, it returns a JSON-encoded string containing `session_id`,
+    the session ID for the new session.
+    """
+    claims = request["claims"]
+
+    data = await request.json()
+
+    try:
+        datetime_string, type_name = data["datetime"], data["type_name"]
+    except KeyError:
+        raise web.HTTPUnprocessableEntity(text="Not all required values in payload!")
+
+    try:
+        datetime_object = datetime.strptime(datetime_string, "%Y-%m-%d %H:%M:%S.%f")
+    except ValueError:
+        raise web.HTTPUnprocessableEntity(text="Invalid date format provided for datetime!")
+
+    async with request.app["pg_pool"].acquire() as connection:
+        session_id = await connection.fetchval("""
+            INSERT INTO sessions (session_owner_id, session_datetime, type_name)
+            VALUES ($1, $2, $3) RETURNING session_id""", claims["user_id"], datetime_object, type_name)
+
+        return web.json_response({"session_id": session_id})
+
 
 @routes.get("/session/{session_id}")
 async def get_session_info(request):
