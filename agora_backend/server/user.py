@@ -36,7 +36,7 @@ async def get_patient_sessions(request):
 
     async with request.app["pg_pool"].acquire() as connection:
         clinician_stmt = await connection.prepare("""
-            SELECT * FROM sessions
+            SELECT sessions.*, display_name FROM sessions JOIN session_types ON sessions.type_name = session_types.name
             WHERE session_owner_id = $2
                 AND (
                     $1 = $2

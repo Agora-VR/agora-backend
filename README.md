@@ -64,7 +64,7 @@ On Windows:
 
 ```
 pg_dump -sO -U postgres agora | Out-File -FilePath .\create_schema.sql
-pg_dump -a -U postgres agora | Out-File -FilePath .\create_schema.sql
+pg_dump -a -U postgres agora | Out-File -FilePath .\create_data.sql
 ```
 
 On GNU/Linux:

@@ -61,8 +61,9 @@ async def get_session_info(request):
 
     async with request.app["pg_pool"].acquire() as connection:
         statement = await connection.prepare("""
-            SELECT user_name, user_full_name, viewable.* FROM (
+            SELECT user_name, user_full_name, display_name, viewable.* FROM (
                 SELECT * FROM sessions
+                    JOIN session_types ON sessions.type_name = session_types.name
                 WHERE session_owner_id = $1
                     OR $1 IN (SELECT clinician_id FROM serves
                             WHERE patient_id = (SELECT session_owner_id FROM sessions WHERE session_id = $2))
@@ -222,6 +223,24 @@ TYPE_MIMES = {
     "text_script": "text/plain",
     "volume_session": "text/csv",
 }
+
+
+@routes.get("/session/{session_id}/files/script")
+@validate_token
+async def get_session_script(request):
+    """
+    Get script for session type
+    """
+    claims = request["claims"]
+
+    session_id = int(request.match_info["session_id"])
+
+    async with request.app["pg_pool"].acquire() as connection:
+        type_script = await connection.fetchval("""
+            SELECT speech FROM sessions JOIN session_types ON sessions.type_name = session_types.name WHERE session_id = $1""",
+            session_id)
+
+        return web.Response(text=type_script)
 
 
 @routes.get("/session/{session_id}/files/{file_type}")

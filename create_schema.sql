@@ -195,9 +195,11 @@ CREATE TABLE public.session_files (
 
 CREATE TABLE public.session_types (
     name character varying NOT NULL,
-    patient_form character varying NOT NULL,
+    patient_form character varying,
     clinician_form character varying,
-    caregiver_form character varying
+    caregiver_form character varying,
+    speech character varying NOT NULL,
+    display_name character varying NOT NULL
 );
 
 

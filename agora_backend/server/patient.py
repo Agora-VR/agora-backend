@@ -114,7 +114,8 @@ async def get_patient_sessions(request):
 
     async with request.app["pg_pool"].acquire() as connection:
 
-        results = await connection.fetch(
-            """SELECT * FROM sessions WHERE session_owner_id = $1""", claims["user_id"])
+        results = await connection.fetch("""
+            SELECT session.*, display_name FROM sessions JOIN session_types ON sessions.type_name = session_types.name
+            WHERE session_owner_id = $1""", claims["user_id"])
 
         return row_list_response(results)
