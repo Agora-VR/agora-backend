@@ -215,6 +215,15 @@ async def post_session_file(request):
     return web.Response(text=f"Successfully stored file of size {size} bytes")
 
 
+TYPE_MIMES = {
+    "audio_session": "audio/mpeg",
+    "distraction_timestamp": "text/csv",
+    "heart_rate_session": "text/csv",
+    "text_script": "text/plain",
+    "volume_session": "text/csv",
+}
+
+
 @routes.get("/session/{session_id}/files/{file_type}")
 @validate_token
 async def get_session_file(request):
@@ -242,6 +251,10 @@ async def get_session_file(request):
         response = web.FileResponse(file_path)
 
         # NOTE: This is hard coded right now, will come from a table in the future
-        response.content_type = "audio/mpeg"
+        # NOTE: I am not actually fixing this, sry
+        try:
+            response.content_type = TYPE_MIMES[file_type]
+        except KeyError:
+            response.content_type = "text/plain"
 
         return response
